@@ -4,4 +4,5 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Based on this understanding, we wanted to see how well Netflix’s Original Productions fared based on data we collected on critical reception. We then wanted to compare this to popular Twitter sentiment for these original productions to understand what kinds of productions are faring well with the public, giving us the ability to provide Netflix with some recommendations. In the streaming world, where content is king, this analysis can help Netflix better understand what specific productions to invest in, what new productions to develop based on what the people want, and when they should release these original productions. 
 
 **Languages:** Apache Spark using PySpark-SQL
+
 **Packages:** TextBlob, Tweepy
