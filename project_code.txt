@@ -1,0 +1,109 @@
+import re, sys
+from pyspark.sql.functions import col
+from pyspark.sql import Row
+from pyspark.sql.functions import expr
+from pyspark.sql import SparkSession
+
+#Load the Netflix data. Please change the load path to your path.
+Netflix = spark.read.option("inferSchema", "true").option("header","true").csv("s3://neha/Project/Netflix.csv")
+
+#Load the movie data. Please change the load path to your path.
+Movie = spark.read.option("inferSchema", "true").option("header","true").csv("s3://neha/Project/Movies.csv")
+
+#Load the TV show data. Please change the load path to your path.
+TV = spark.read.option("inferSchema", "true").option("header","true").csv("s3://neha/Project/TV.csv")
+
+#Merge TV and Movie data
+Merge_data = Movie.union(TV)
+
+#Left join TV and Movie to Netflix to achieve transformation
+Netflix_final = Netflix.join(Merge_data, "title", "left_outer")
+
+#Since we mainly use IMDb(score) to do the query and analysis, here we need to drop the rows that IMDb value is NA
+Netflix_final = Netflix_final.na.drop(subset=["IMDb"])
+
+#Fill with NA value with 0 for all the integer columns
+Netflix_final = Netflix_final.na.fill(0)
+
+#Check the total number of TV and Movie
+Netflix_final.count()
+
+#Describe the dataframe
+Netflix_final.printSchema()
+
+#Describe the IMDb(score)
+Netflix_final.describe('IMDb').show()
+
+#Find total number of movies and TV shows that netflix has
+Netflix_final.filter(Netflix_final.Netflix==1).count()
+
+#Find total number of movies and TV shows that Hulu has
+Netflix_final.filter(Netflix_final.Hulu==1).count()
+
+#Find total number of movies and TV shows that Disney + has
+Netflix_final.filter(Netflix_final.Disney_plus==1).count()
+
+#Find the data about Netflix
+Netflix_data = Netflix_final.filter(Netflix_final.Netflix==1)
+
+#Find the data about Hulu
+Hulu_data = Netflix_final.filter(Netflix_final.Hulu==1)
+
+#Find the data about Disney_plus
+Disney_data = Netflix_final.filter(Netflix_final.Disney_plus==1)
+
+#Describe the IMDb(score) for Netflix movies and TV Show only
+Netflix_data.describe('IMDb').show()
+
+#Describe the IMDb(score) for Hulu movies and TV Show only
+Hulu_data.describe('IMDb').show()
+
+#Describe the IMDb(score) for Disney_plus movies and TV Show only
+Disney_data.describe('IMDb').show()
+
+#Find the number of movies that Netflix has
+Netflix_data.filter(Netflix_data.type=="Movie").count()
+
+#Find the number of TV Show that Netflix has
+Netflix_data.filter(Netflix_data.type=="TV Show").count()
+
+#Find the number of movies that Hulu has
+Hulu_data.filter(Hulu_data.type=="Movie").count()
+
+#Find the number of TV Show that Hulu has
+Hulu_data.filter(Hulu_data.type=="TV Show").count()
+
+#Find the number of movies that Disney_plus has
+Disney_data.filter(Disney_data.type=="Movie").count()
+
+#Find the number of TV Show that Disney_plus has
+Disney_data.filter(Disney_data.type=="TV Show").count()
+
+#Describe the IMDb(score)of movie data that Netflix has 
+Netflix_data.filter(Netflix_data.type=="Movie").describe('IMDb').show()
+
+#Describe the IMDb(score)of TV Show data that Netflix has 
+Netflix_data.filter(Netflix_data.type=="TV Show").describe('IMDb').show()
+
+#Describe the IMDb(score)of movie data that Hulu has 
+Hulu_data.filter(Hulu_data.type=="Movie").describe('IMDb').show()
+
+#Describe the IMDb(score)of TV Show data that Hulu has 
+Hulu_data.filter(Hulu_data.type=="TV Show").describe('IMDb').show()
+
+#Describe the IMDb(score)of movie data that Disney_plus has 
+Disney_data.filter(Disney_data.type=="Movie").describe('IMDb').show()
+
+#Describe the IMDb(score)of TV Show data that Disney_plus has 
+Disney_data.filter(Disney_data.type=="TV Show").describe('IMDb').show()
+
+import pyspark.sql.functions as F
+
+#Find Average IMDb(score) by each director in descending order
+Netflix_final.groupby('director').agg(F.mean(Netflix_final['IMDb'])).orderBy(-F.mean(Netflix_final['IMDb'])).show()
+
+#Find total number of movies by each director in descending order
+Netflix_final.groupby('director').agg(F.count(Netflix_final['IMDb'])).orderBy(-F.count(Netflix_final['IMDb'])).show()
+
+#Find Average IMDb(score) by each category
+Netflix_final.groupby('listed_in').agg(F.mean(Netflix_final['IMDb'])).orderBy(-F.mean(Netflix_final['IMDb'])).show()
